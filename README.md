@@ -1,6 +1,6 @@
 # UAP-Petruk
 
-Tugas Pemrograman Terstruktur
+Studi Kasus 2 : Toko Hammer Bakery
 
 ## Nama Anggota Kelompok
 

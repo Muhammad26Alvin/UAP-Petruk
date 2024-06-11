@@ -1,0 +1,303 @@
+#include <iostream>
+#include <vector>
+#include <list>
+#include <stack>
+#include <queue>
+#include <string>
+#include <cstring>
+
+using namespace std;
+
+struct User {
+    char username[50];
+    char password[50];
+};
+
+vector<User> users;
+
+// harga kue
+const int cakePrices[6][2] = {
+    {20000, 40000},  // Waffle
+    {30000, 60000},  // Brownies
+    {10000, 20000},  // Cookies
+    {22500, 45000},  // Donut
+    {15000, 30000},  // Croissant
+    {15000, 30000}   // Cromboloni
+};
+
+class Purchase {
+public:
+    char name[50];
+    char size[10];
+    char topping[50];
+    int quantity;
+    int price;
+
+    Purchase(const char* name, const char* size, const char* topping, int quantity, int price) {
+        strcpy(this->name, name);
+        strcpy(this->size, size);
+        strcpy(this->topping, topping);
+        this->quantity = quantity;
+        this->price = price;
+    }
+};
+
+queue<Purchase> purchasesQueue;
+
+bool registerUser();
+bool loginUser();
+void tampilan();
+void printReceipt();
+void pembayaran();
+void addPurchaseToQueue(Purchase purchase);
+void processQueue();
+
+// registrasi
+bool registerUser() {
+    User newUser;
+    cout << "===== Pendaftaran =====" << endl;
+    cout << "Masukkan username: ";
+    cin >> newUser.username;
+
+    cout << "Masukkan password: ";
+    cin >> newUser.password;
+
+    // username dan password telah digunakan
+    for (const auto& user : users) {
+        if (strcmp(user.username, newUser.username) == 0) {
+            cout << "Username sudah ada, masukkan Username lain." << endl;
+            return false;
+        }
+    }
+
+    users.push_back(newUser);
+    cout << "Pendaftaran berhasil!" << endl;
+    return true;
+}
+
+// Login 
+bool loginUser() {
+    char username[50], password[50];
+    cout << "===== Login =====" << endl;
+    cout << "Masukkan username: ";
+    cin >> username;
+
+    cout << "Masukkan password: ";
+    cin >> password;
+
+    // mengecek apakah username dan pw sudah sesuai
+    for (const auto& user : users) {
+        if (strcmp(user.username, username) == 0 && strcmp(user.password, password) == 0) {
+            cout << "Login berhasil!" << endl;
+            return true;
+        }
+    }
+
+    cout << "Username atau Password anda salah!, coba ulang." << endl;
+    return false;
+}
+
+// tampilan 
+void tampilan() {
+    int pilih;
+    int jumlah;
+    int ukuran;
+    int toping;
+    int bayar;
+    char name[50];
+    char size[10];
+    char topping[50];
+
+    cout << "======== Nama Kue & Harga ========\n\n";
+    cout << "1. Waffle      = Rp20.000 (kecil) / Rp40.000 (besar)" << endl;
+    cout << "2. Brownies    = Rp30.000 (kecil) / Rp60.000 (besar)" << endl;
+    cout << "3. Cookies     = Rp10.000 (kecil) / Rp20.000 (besar)" << endl;
+    cout << "4. Donut       = Rp22.500 (kecil) / Rp45.000 (besar)" << endl;
+    cout << "5. Croissant   = Rp15.000 (kecil) / Rp30.000 (besar)" << endl;
+    cout << "6. Cromboloni  = Rp15.000 (kecil) / Rp30.000 (besar)" << endl;
+
+    cout << "\nPilih Kue : "; cin >> pilih;
+
+    if (pilih < 1 || pilih > 6) {
+        cout << "\n----- Nomor Invalid -----" << endl;
+        return;
+    }
+
+    const char* cakeNames[] = {"Waffle", "Brownies", "Cookies", "Donut", "Croissant", "Cromboloni"};
+
+    strcpy(name, cakeNames[pilih - 1]);
+    cout << "\nKue Yang Anda Pilih : " << cakeNames[pilih - 1];
+    cout << "\nPilih Ukuran (1: Kecil, 2: Besar): "; cin >> ukuran;
+
+    if (ukuran == 1) {
+        cout << "\nUkuran: Kecil";
+        bayar = cakePrices[pilih - 1][0];
+        strcpy(size, "Kecil");
+    } else if (ukuran == 2) {
+        cout << "\nUkuran: Besar";
+        bayar = cakePrices[pilih - 1][1];
+        strcpy(size, "Besar");
+    } else {
+        cout << "\nUkuran Invalid!";
+        return;
+    }
+
+    cout << "\nPilih Topping (1: Original, 2: Cokelat, 3: Keju, 4: Stroberi): "; cin >> toping;
+    switch (toping) {
+        case 1:
+            strcpy(topping, "Original");
+            cout << "\nTopping: Original";
+            break;
+        case 2:
+            strcpy(topping, "Cokelat");
+            cout << "\nTopping: Cokelat";
+            break;
+        case 3:
+            strcpy(topping, "Keju");
+            cout << "\nTopping: Keju";
+            break;
+        case 4:
+            strcpy(topping, "Stroberi");
+            cout << "\nTopping: Stroberi";
+            break;
+        default:
+            cout << "\nTopping Invalid!";
+            return;
+    }
+
+    cout << "\nJumlah Barang : "; cin >> jumlah;
+    bayar *= jumlah;
+
+    Purchase purchase(name, size, topping, jumlah, bayar);
+    addPurchaseToQueue(purchase);
+}
+
+void addPurchaseToQueue(Purchase purchase) {
+    purchasesQueue.push(purchase);
+}
+
+void processQueue() {
+    stack<Purchase> purchaseStack;
+
+    while (!purchasesQueue.empty()) {
+        purchaseStack.push(purchasesQueue.front());
+        purchasesQueue.pop();
+    }
+
+    while (!purchaseStack.empty()) {
+        purchasesQueue.push(purchaseStack.top());
+        purchaseStack.pop();
+    }
+}
+
+void printReceipt() {
+    int total = 0;
+    cout << "\n======= Struk Pembelian =======\n";
+    processQueue();
+    while (!purchasesQueue.empty()) {
+        Purchase purchase = purchasesQueue.front();
+        purchasesQueue.pop();
+        cout << purchase.name << " (" << purchase.size << ") - " << purchase.topping << " x" << purchase.quantity << " = Rp" << purchase.price << endl;
+        total += purchase.price;
+    }
+    cout << "Total Pembelian: Rp" << total << endl;
+    cout << "\n======= Terima kasih ========\n";
+    cout << "===============================\n";
+}
+
+void pembayaran() {
+    int uangUser, total = 0, kembalian;
+
+    processQueue();
+    queue<Purchase> tempQueue = purchasesQueue;
+
+    while (!tempQueue.empty()) {
+        total += tempQueue.front().price;
+        tempQueue.pop();
+    }
+
+    cout << "\nTotal Pembayaran : Rp" << total << endl;
+    cout << "-------------------------" << endl;
+
+    // pembayaran
+    cout << "Masukan Uang Anda : "; cin >> uangUser;
+
+    if (uangUser < total) {
+        cout << "\nUang Anda Kurang! Tidak Dapat Melanjutkan Transaksi!" << endl;
+        cout << "\n----- Terimakasih -----\n\n";
+    } else {
+        if (uangUser > total) {
+            kembalian = uangUser - total;
+            cout << "Kembalian : " << kembalian;
+        }
+        cout << "\n\nTransaksi Anda Berhasil!" << endl;
+        cout << "\n----- Terimakasih -----" << endl;
+        printReceipt(); 
+    } 
+}
+
+void displayMainMenu() {
+    char pilih;
+    do {
+        tampilan();
+        cout << "\n\nIngin menambah pesanan? (y/t) : "; cin >> pilih;
+    } while (pilih == 'y' || pilih == 'Y');
+
+    if (!purchasesQueue.empty()) {
+        pembayaran();
+    }
+}
+
+int main() {
+    int choice;
+    bool loggedIn = false;
+
+    do {
+        cout << "==== Selamat Datang di Toko Hammer Bakery ====" << endl;
+        cout << "1. Daftar" << endl;
+        cout << "2. Login" << endl;
+        cout << "3. Keluar" << endl;
+        cout << "Masukkan pilihan : ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                while (!loggedIn && registerUser()) {
+                    loggedIn = loginUser();
+                    if (loggedIn) {
+                        displayMainMenu();
+                    }
+                }
+                break;
+            case 2:
+                while (!loggedIn && !loginUser()) {}
+                if (loggedIn) {
+                    displayMainMenu();
+                }
+                break;
+            case 3:
+                cout << "Berhasil Keluar. Datang lagi!" << endl;
+                return 0;
+            default:
+                cout << "Pilihan invalid. Keluar." << endl;
+                return 0;
+        }
+
+        if (!loggedIn) {
+            cout << "Pilihan invalid. Keluar." << endl;
+            return 0;
+        }
+
+        cout << "\n\nIngin melakukan transaksi lagi? (y/t) : "; char pilih; cin >> pilih; cout << endl;
+        if (pilih == 't' || pilih == 'T') {
+        	cout << "===== Terima Kasih Sudah Belanja di Toko Hammer Bakery ======" << endl;
+            break;
+        }
+        else if (pilih == 'y' || pilih == 'Y' ){
+        	while (loggedIn = true){
+			displayMainMenu();}
+		}
+    } while (true);
+
+    return 0;
+}
